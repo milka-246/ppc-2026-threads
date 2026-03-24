@@ -7,12 +7,33 @@
 #include <utility>
 #include <vector>
 
+#ifdef _OPENMP
+#  include <omp.h>
+#endif
+
 namespace olesnitskiy_v_hoare_sort_simple_merge_seq {
 
 OlesnitskiyVHoareSortSimpleMergeOMP::OlesnitskiyVHoareSortSimpleMergeOMP(const std::vector<int> &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput() = {};
+
+#ifdef _OPENMP
+  omp_set_dynamic(0);
+  omp_set_nested(0);
+#endif
+}
+
+OlesnitskiyVHoareSortSimpleMergeOMP::~OlesnitskiyVHoareSortSimpleMergeOMP() {
+#ifdef _OPENMP
+#  pragma omp parallel
+  {
+#  pragma omp single
+    {
+    }
+  }
+#  pragma omp barrier
+#endif
 }
 
 int OlesnitskiyVHoareSortSimpleMergeOMP::HoarePartition(std::vector<int> &array, int left, int right) {
@@ -91,8 +112,12 @@ void OlesnitskiyVHoareSortSimpleMergeOMP::SortBlocks(std::vector<int> &data, siz
   const size_t block_count = (size + block_size - 1) / block_size;
   const auto block_count_i64 = static_cast<std::int64_t>(block_count);
 
-#pragma omp parallel for default(none) shared(data, size, block_size, block_count_i64) schedule(static) \
-    num_threads(num_threads)
+  int actual_threads = num_threads;
+#ifdef _OPENMP
+  actual_threads = std::min(num_threads, omp_get_max_threads());
+#  pragma omp parallel for default(none) shared(data, size, block_size, block_count_i64) schedule(static) \
+      num_threads(actual_threads)
+#endif
   for (std::int64_t block_index = 0; block_index < block_count_i64; ++block_index) {
     size_t block_start = static_cast<size_t>(block_index) * block_size;
     size_t block_end = std::min(block_start + block_size, size);
@@ -112,6 +137,11 @@ void OlesnitskiyVHoareSortSimpleMergeOMP::MergeSortedBlocks(std::vector<int> &da
   std::vector<int> buffer(size);
   bool data_is_source = true;
 
+  int actual_threads = num_threads;
+#ifdef _OPENMP
+  actual_threads = std::min(num_threads, omp_get_max_threads());
+#endif
+
   for (size_t merge_width = block_size; merge_width < size; merge_width *= 2) {
     const size_t chunk_width = merge_width * 2;
     const size_t chunk_count = (size + chunk_width - 1) / chunk_width;
@@ -119,8 +149,10 @@ void OlesnitskiyVHoareSortSimpleMergeOMP::MergeSortedBlocks(std::vector<int> &da
     const std::vector<int> &source = data_is_source ? data : buffer;
     std::vector<int> &destination = data_is_source ? buffer : data;
 
-#pragma omp parallel for default(none) shared(source, destination, size, merge_width, chunk_width, chunk_count_i64) \
-    schedule(static) num_threads(num_threads)
+#ifdef _OPENMP
+#  pragma omp parallel for default(none) shared(source, destination, size, merge_width, chunk_width, chunk_count_i64) \
+      schedule(static) num_threads(actual_threads)
+#endif
     for (std::int64_t chunk_index = 0; chunk_index < chunk_count_i64; ++chunk_index) {
       size_t left = static_cast<size_t>(chunk_index) * chunk_width;
       size_t middle = std::min(left + merge_width, size);
