@@ -18,16 +18,12 @@ class OlesnitskiyVHoareSortSimpleMergeOMP : public BaseTask {
  private:
   static int HoarePartition(std::vector<int> &array, int left, int right);
   static void HoareQuickSort(std::vector<int> &array, int left, int right);
-  static std::vector<int> SimpleMerge(const std::vector<int> &left_part, const std::vector<int> &right_part);
-  static void SortBlocks(std::vector<int> &data, std::size_t block_size);
-  static void MergeSortedBlocks(std::vector<int> &data, std::size_t block_size);
+  static void Merge(std::vector<int> &array, int left, int middle, int right);
 
   bool ValidationImpl() override;
   bool PreProcessingImpl() override;
   bool RunImpl() override;
   bool PostProcessingImpl() override;
-
-  std::vector<int> data_;
 };
 
 }  // namespace olesnitskiy_v_hoare_sort_simple_merge_seq

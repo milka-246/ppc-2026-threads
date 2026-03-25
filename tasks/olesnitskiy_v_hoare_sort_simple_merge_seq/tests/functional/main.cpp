@@ -1,33 +1,43 @@
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <array>
 #include <cstddef>
 #include <string>
 #include <tuple>
+#include <vector>
 
 #include "olesnitskiy_v_hoare_sort_simple_merge_seq/common/include/common.hpp"
 #include "olesnitskiy_v_hoare_sort_simple_merge_seq/omp/include/ops_omp.hpp"
 #include "olesnitskiy_v_hoare_sort_simple_merge_seq/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
-#include "util/include/util.hpp"
 
 namespace olesnitskiy_v_hoare_sort_simple_merge_seq {
 
 class OlesnitskiyVRunFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
-    return std::get<2>(test_param);
+    return std::get<2>(test_param) + "_n" + std::to_string(std::get<0>(test_param).size());
   }
 
  protected:
   void SetUp() override {
-    const TestType param = std::get<static_cast<size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-    input_data_ = std::get<0>(param);
-    expected_data_ = std::get<1>(param);
+    const TestType &test_param =
+        std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
+    input_data_ = std::get<0>(test_param);
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return output_data == expected_data_;
+    if (output_data.size() != input_data_.size()) {
+      return false;
+    }
+    if (!std::ranges::is_sorted(output_data)) {
+      return false;
+    }
+
+    std::vector<int> expected_data = input_data_;
+    std::ranges::sort(expected_data);
+    return output_data == expected_data;
   }
 
   InType GetTestInputData() final {
@@ -36,7 +46,6 @@ class OlesnitskiyVRunFuncTests : public ppc::util::BaseRunFuncTests<InType, OutT
 
  private:
   InType input_data_;
-  OutType expected_data_;
 };
 
 namespace {
