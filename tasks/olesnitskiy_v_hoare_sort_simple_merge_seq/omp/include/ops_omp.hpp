@@ -15,9 +15,9 @@ class OlesnitskiyVHoareSortSimpleMergeOMP : public BaseTask {
   explicit OlesnitskiyVHoareSortSimpleMergeOMP(const InType &in);
 
  private:
-  static int HoarePartition(std::vector<int> &array, int left, int right);
-  static void HoareQuickSort(std::vector<int> &array, int left, int right);
-  static void Merge(std::vector<int> &array, int left, int mid, int right);
+  static int HoarePartition(std::vector<int> &values, int left, int right);
+  static void HoareQuickSort(std::vector<int> &values, int left, int right);
+  static void Merge(std::vector<int> &values, int left, int mid, int right);
 
   bool ValidationImpl() override;
   bool PreProcessingImpl() override;

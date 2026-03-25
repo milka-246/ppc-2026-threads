@@ -18,19 +18,19 @@ OlesnitskiyVHoareSortSimpleMergeOMP::OlesnitskiyVHoareSortSimpleMergeOMP(const I
   GetOutput().clear();
 }
 
-int OlesnitskiyVHoareSortSimpleMergeOMP::HoarePartition(std::vector<int> &array, int left, int right) {
-  const int pivot = array[left + ((right - left) / 2)];
+int OlesnitskiyVHoareSortSimpleMergeOMP::HoarePartition(std::vector<int> &values, int left, int right) {
+  const int pivot = values[left + ((right - left) / 2)];
   int i = left - 1;
   int j = right + 1;
 
   while (true) {
     ++i;
-    while (array[i] < pivot) {
+    while (values[i] < pivot) {
       ++i;
     }
 
     --j;
-    while (array[j] > pivot) {
+    while (values[j] > pivot) {
       --j;
     }
 
@@ -38,11 +38,11 @@ int OlesnitskiyVHoareSortSimpleMergeOMP::HoarePartition(std::vector<int> &array,
       return j;
     }
 
-    std::swap(array[i], array[j]);
+    std::swap(values[i], values[j]);
   }
 }
 
-void OlesnitskiyVHoareSortSimpleMergeOMP::HoareQuickSort(std::vector<int> &array, int left, int right) {
+void OlesnitskiyVHoareSortSimpleMergeOMP::HoareQuickSort(std::vector<int> &values, int left, int right) {
   std::stack<std::pair<int, int>> ranges;
   ranges.emplace(left, right);
 
@@ -54,7 +54,7 @@ void OlesnitskiyVHoareSortSimpleMergeOMP::HoareQuickSort(std::vector<int> &array
       continue;
     }
 
-    const int partition_index = HoarePartition(array, current_left, current_right);
+    const int partition_index = HoarePartition(values, current_left, current_right);
 
     if ((partition_index - current_left) > (current_right - (partition_index + 1))) {
       ranges.emplace(current_left, partition_index);
@@ -66,7 +66,7 @@ void OlesnitskiyVHoareSortSimpleMergeOMP::HoareQuickSort(std::vector<int> &array
   }
 }
 
-void OlesnitskiyVHoareSortSimpleMergeOMP::Merge(std::vector<int> &array, int left, int mid, int right) {
+void OlesnitskiyVHoareSortSimpleMergeOMP::Merge(std::vector<int> &values, int left, int mid, int right) {
   std::vector<int> merged;
   const int merged_size = (right - left) + 1;
   merged.reserve(static_cast<std::size_t>(merged_size));
@@ -75,23 +75,23 @@ void OlesnitskiyVHoareSortSimpleMergeOMP::Merge(std::vector<int> &array, int lef
   int right_index = mid + 1;
 
   while (left_index <= mid && right_index <= right) {
-    if (array[left_index] <= array[right_index]) {
-      merged.push_back(array[left_index++]);
+    if (values[left_index] <= values[right_index]) {
+      merged.push_back(values[left_index++]);
     } else {
-      merged.push_back(array[right_index++]);
+      merged.push_back(values[right_index++]);
     }
   }
 
   while (left_index <= mid) {
-    merged.push_back(array[left_index++]);
+    merged.push_back(values[left_index++]);
   }
 
   while (right_index <= right) {
-    merged.push_back(array[right_index++]);
+    merged.push_back(values[right_index++]);
   }
 
   for (std::size_t idx = 0; idx < merged.size(); ++idx) {
-    array[static_cast<std::size_t>(left) + idx] = merged[idx];
+    values[static_cast<std::size_t>(left) + idx] = merged[idx];
   }
 }
 
@@ -105,8 +105,8 @@ bool OlesnitskiyVHoareSortSimpleMergeOMP::PreProcessingImpl() {
 }
 
 bool OlesnitskiyVHoareSortSimpleMergeOMP::RunImpl() {
-  std::vector<int> &array = GetOutput();
-  const int n = static_cast<int>(array.size());
+  std::vector<int> &values = GetOutput();
+  const int n = static_cast<int>(values.size());
   if (n <= 1) {
     return true;
   }
@@ -115,8 +115,8 @@ bool OlesnitskiyVHoareSortSimpleMergeOMP::RunImpl() {
   const int chunks = std::min(max_threads, n);
 
   if (chunks == 1) {
-    HoareQuickSort(array, 0, n - 1);
-    return std::ranges::is_sorted(array);
+    HoareQuickSort(values, 0, n - 1);
+    return std::ranges::is_sorted(values);
   }
 
   std::vector<int> borders(static_cast<std::size_t>(chunks + 1));
@@ -124,22 +124,22 @@ bool OlesnitskiyVHoareSortSimpleMergeOMP::RunImpl() {
     borders[static_cast<std::size_t>(i)] = (i * n) / chunks;
   }
 
-#pragma omp parallel for default(none) shared(array, borders, chunks)
+#pragma omp parallel for default(none) shared(values, borders, chunks)
   for (int chunk = 0; chunk < chunks; ++chunk) {
     const int left = borders[static_cast<std::size_t>(chunk)];
     const int right = borders[static_cast<std::size_t>(chunk) + 1] - 1;
     if (left < right) {
-      HoareQuickSort(array, left, right);
+      HoareQuickSort(values, left, right);
     }
   }
 
   for (int i = 0; i < chunks - 1; ++i) {
     const int mid = borders[static_cast<std::size_t>(i) + 1] - 1;
     const int right = borders[static_cast<std::size_t>(i) + 2] - 1;
-    Merge(array, 0, mid, right);
+    Merge(values, 0, mid, right);
   }
 
-  return std::ranges::is_sorted(array);
+  return std::ranges::is_sorted(values);
 }
 
 bool OlesnitskiyVHoareSortSimpleMergeOMP::PostProcessingImpl() {

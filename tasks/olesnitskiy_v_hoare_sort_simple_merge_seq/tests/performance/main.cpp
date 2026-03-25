@@ -11,7 +11,7 @@
 
 namespace olesnitskiy_v_hoare_sort_simple_merge_seq {
 
-class OlesnitskiyVRunPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
+class OlesnitskiyVRunPerfTestsThreads : public ppc::util::BaseRunPerfTests<InType, OutType> {
   InType input_data_;
 
   void SetUp() override {
@@ -36,7 +36,7 @@ class OlesnitskiyVRunPerfTests : public ppc::util::BaseRunPerfTests<InType, OutT
   }
 };
 
-TEST_P(OlesnitskiyVRunPerfTests, RunPerfModes) {
+TEST_P(OlesnitskiyVRunPerfTestsThreads, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
@@ -48,9 +48,9 @@ const auto kAllPerfTasks =
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
-const auto kPerfTestName = OlesnitskiyVRunPerfTests::CustomPerfTestName;
+const auto kPerfTestName = OlesnitskiyVRunPerfTestsThreads::CustomPerfTestName;
 
-INSTANTIATE_TEST_SUITE_P(RunModeTests, OlesnitskiyVRunPerfTests, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(RunModeTests, OlesnitskiyVRunPerfTestsThreads, kGtestValues, kPerfTestName);
 
 }  // namespace
 
