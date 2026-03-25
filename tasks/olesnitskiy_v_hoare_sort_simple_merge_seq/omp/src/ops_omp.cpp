@@ -90,8 +90,8 @@ void OlesnitskiyVHoareSortSimpleMergeOMP::Merge(std::vector<int> &array, int lef
     merged.push_back(array[right_index++]);
   }
 
-  for (std::size_t index = 0; index < merged.size(); ++index) {
-    array[static_cast<std::size_t>(left) + index] = merged[index];
+  for (std::size_t idx = 0; idx < merged.size(); ++idx) {
+    array[static_cast<std::size_t>(left) + idx] = merged[idx];
   }
 }
 
@@ -106,36 +106,36 @@ bool OlesnitskiyVHoareSortSimpleMergeOMP::PreProcessingImpl() {
 
 bool OlesnitskiyVHoareSortSimpleMergeOMP::RunImpl() {
   std::vector<int> &array = GetOutput();
-  const int size = static_cast<int>(array.size());
-  if (size <= 1) {
+  const int n = static_cast<int>(array.size());
+  if (n <= 1) {
     return true;
   }
 
   const int max_threads = std::max(1, omp_get_max_threads());
-  const int chunk_count = std::min(max_threads, size);
+  const int chunks = std::min(max_threads, n);
 
-  if (chunk_count == 1) {
-    HoareQuickSort(array, 0, size - 1);
+  if (chunks == 1) {
+    HoareQuickSort(array, 0, n - 1);
     return std::ranges::is_sorted(array);
   }
 
-  std::vector<int> borders(static_cast<std::size_t>(chunk_count + 1));
-  for (int border_index = 0; border_index <= chunk_count; ++border_index) {
-    borders[static_cast<std::size_t>(border_index)] = (border_index * size) / chunk_count;
+  std::vector<int> borders(static_cast<std::size_t>(chunks + 1));
+  for (int i = 0; i <= chunks; ++i) {
+    borders[static_cast<std::size_t>(i)] = (i * n) / chunks;
   }
 
-#pragma omp parallel for default(none) shared(array, borders, chunk_count)
-  for (int chunk_index = 0; chunk_index < chunk_count; ++chunk_index) {
-    const int left = borders[static_cast<std::size_t>(chunk_index)];
-    const int right = borders[static_cast<std::size_t>(chunk_index) + 1] - 1;
+#pragma omp parallel for default(none) shared(array, borders, chunks)
+  for (int chunk = 0; chunk < chunks; ++chunk) {
+    const int left = borders[static_cast<std::size_t>(chunk)];
+    const int right = borders[static_cast<std::size_t>(chunk) + 1] - 1;
     if (left < right) {
       HoareQuickSort(array, left, right);
     }
   }
 
-  for (int merge_index = 0; merge_index < chunk_count - 1; ++merge_index) {
-    const int mid = borders[static_cast<std::size_t>(merge_index) + 1] - 1;
-    const int right = borders[static_cast<std::size_t>(merge_index) + 2] - 1;
+  for (int i = 0; i < chunks - 1; ++i) {
+    const int mid = borders[static_cast<std::size_t>(i) + 1] - 1;
+    const int right = borders[static_cast<std::size_t>(i) + 2] - 1;
     Merge(array, 0, mid, right);
   }
 

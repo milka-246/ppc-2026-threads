@@ -22,8 +22,8 @@ class OlesnitskiyVRunPerfTests : public ppc::util::BaseRunPerfTests<InType, OutT
     std::mt19937 gen(rd());
     std::uniform_int_distribution<int> dist(-1000000, 1000000);
 
-    for (std::size_t index = 0; index < kCount; ++index) {
-      input_data_[index] = dist(gen);
+    for (std::size_t i = 0; i < kCount; ++i) {
+      input_data_[i] = dist(gen);
     }
   }
 
