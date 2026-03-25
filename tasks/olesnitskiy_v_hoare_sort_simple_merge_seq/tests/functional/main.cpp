@@ -11,6 +11,7 @@
 #include "olesnitskiy_v_hoare_sort_simple_merge_seq/omp/include/ops_omp.hpp"
 #include "olesnitskiy_v_hoare_sort_simple_merge_seq/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
+#include "util/include/util.hpp"
 
 namespace olesnitskiy_v_hoare_sort_simple_merge_seq {
 
@@ -22,9 +23,8 @@ class OlesnitskiyVRunFuncTests : public ppc::util::BaseRunFuncTests<InType, OutT
 
  protected:
   void SetUp() override {
-    const TestType &test_param =
-        std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-    input_data_ = std::get<0>(test_param);
+    const TestType &params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
+    input_data_ = std::get<0>(params);
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
@@ -35,9 +35,9 @@ class OlesnitskiyVRunFuncTests : public ppc::util::BaseRunFuncTests<InType, OutT
       return false;
     }
 
-    std::vector<int> expected_data = input_data_;
-    std::ranges::sort(expected_data);
-    return output_data == expected_data;
+    std::vector<int> expected = input_data_;
+    std::ranges::sort(expected);
+    return output_data == expected;
   }
 
   InType GetTestInputData() final {
@@ -55,25 +55,27 @@ TEST_P(OlesnitskiyVRunFuncTests, HoareSortSimpleMerge) {
 }
 
 const std::array<TestType, 8> kTestParam = {
-    TestType{InType{5}, OutType{5}, "single_element"},
-    TestType{InType{2, 1}, OutType{1, 2}, "two_elements"},
-    TestType{InType{1, 2, 3, 4, 5}, OutType{1, 2, 3, 4, 5}, "already_sorted"},
-    TestType{InType{9, 7, 5, 3, 1}, OutType{1, 3, 5, 7, 9}, "reverse_sorted"},
-    TestType{InType{4, 1, 3, 4, 2, 3, 1}, OutType{1, 1, 2, 3, 3, 4, 4}, "with_duplicates"},
-    TestType{InType{-3, 0, 5, -10, 8, -1}, OutType{-10, -3, -1, 0, 5, 8}, "negative_values"},
-    TestType{InType{10, -5, 0, 10, -5, 8, 2, 2}, OutType{-5, -5, 0, 2, 2, 8, 10, 10}, "mixed_values"},
-    TestType{InType{15, 3, 27, 9, 1, 8, 2, 11, 6, 4, 5}, OutType{1, 2, 3, 4, 5, 6, 8, 9, 11, 15, 27}, "odd_size"}};
+    std::make_tuple(std::vector<int>{5}, std::vector<int>{5}, "single_element"),
+    std::make_tuple(std::vector<int>{2, 1}, std::vector<int>{1, 2}, "two_elements"),
+    std::make_tuple(std::vector<int>{1, 2, 3, 4, 5}, std::vector<int>{1, 2, 3, 4, 5}, "already_sorted"),
+    std::make_tuple(std::vector<int>{9, 7, 5, 3, 1}, std::vector<int>{1, 3, 5, 7, 9}, "reverse_sorted"),
+    std::make_tuple(std::vector<int>{4, 1, 3, 4, 2, 3, 1}, std::vector<int>{1, 1, 2, 3, 3, 4, 4}, "with_duplicates"),
+    std::make_tuple(std::vector<int>{-3, 0, 5, -10, 8, -1}, std::vector<int>{-10, -3, -1, 0, 5, 8}, "negative_values"),
+    std::make_tuple(std::vector<int>{10, -5, 0, 10, -5, 8, 2, 2}, std::vector<int>{-5, -5, 0, 2, 2, 8, 10, 10},
+                    "mixed_values"),
+    std::make_tuple(std::vector<int>{15, 3, 27, 9, 1, 8, 2, 11, 6, 4, 5},
+                    std::vector<int>{1, 2, 3, 4, 5, 6, 8, 9, 11, 15, 27}, "odd_size")};
 
-const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<OlesnitskiyVHoareSortSimpleMergeOMP, InType>(
+const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<OlesnitskiyVHoareSortSimpleMergeSEQ, InType>(
                                                kTestParam, PPC_SETTINGS_olesnitskiy_v_hoare_sort_simple_merge_seq),
-                                           ppc::util::AddFuncTask<OlesnitskiyVHoareSortSimpleMergeSEQ, InType>(
+                                           ppc::util::AddFuncTask<OlesnitskiyVHoareSortSimpleMergeOMP, InType>(
                                                kTestParam, PPC_SETTINGS_olesnitskiy_v_hoare_sort_simple_merge_seq));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
 const auto kTestName = OlesnitskiyVRunFuncTests::PrintFuncTestName<OlesnitskiyVRunFuncTests>;
 
-INSTANTIATE_TEST_SUITE_P(HoareSimpleMergeFuncTests, OlesnitskiyVRunFuncTests, kGtestValues, kTestName);
+INSTANTIATE_TEST_SUITE_P(HoareSortSimpleMergingTests, OlesnitskiyVRunFuncTests, kGtestValues, kTestName);
 
 }  // namespace
 

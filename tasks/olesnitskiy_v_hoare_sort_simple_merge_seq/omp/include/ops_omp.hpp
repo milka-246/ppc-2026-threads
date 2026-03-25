@@ -1,6 +1,5 @@
 #pragma once
 
-#include <cstddef>
 #include <vector>
 
 #include "olesnitskiy_v_hoare_sort_simple_merge_seq/common/include/common.hpp"
@@ -18,7 +17,7 @@ class OlesnitskiyVHoareSortSimpleMergeOMP : public BaseTask {
  private:
   static int HoarePartition(std::vector<int> &array, int left, int right);
   static void HoareQuickSort(std::vector<int> &array, int left, int right);
-  static void Merge(std::vector<int> &array, int left, int middle, int right);
+  static void Merge(std::vector<int> &array, int left, int mid, int right);
 
   bool ValidationImpl() override;
   bool PreProcessingImpl() override;

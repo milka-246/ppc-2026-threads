@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <random>
 
 #include "olesnitskiy_v_hoare_sort_simple_merge_seq/common/include/common.hpp"
 #include "olesnitskiy_v_hoare_sort_simple_merge_seq/omp/include/ops_omp.hpp"
@@ -10,29 +11,24 @@
 
 namespace olesnitskiy_v_hoare_sort_simple_merge_seq {
 
-namespace {
-int NextPseudoRandom(int &state) {
-  state = (state * 1103515245 + 12345) & 0x7fffffff;
-  return state;
-}
-}  // namespace
-
-class OlesnitskiyVRunPerfTestSEQ : public ppc::util::BaseRunPerfTests<InType, OutType> {
+class OlesnitskiyVRunPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
   InType input_data_;
 
   void SetUp() override {
-    constexpr size_t kSize = 100000;
-    input_data_.resize(kSize);
+    constexpr std::size_t kCount = 100000;
+    input_data_.resize(kCount);
 
-    int state = 2026;
-    std::ranges::generate(input_data_, [&]() {
-      int value = NextPseudoRandom(state);
-      return (value % 2000001) - 1000000;
-    });
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<int> dist(-1000000, 1000000);
+
+    for (std::size_t index = 0; index < kCount; ++index) {
+      input_data_[index] = dist(gen);
+    }
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return std::ranges::is_sorted(output_data);
+    return output_data.size() == input_data_.size() && std::ranges::is_sorted(output_data);
   }
 
   InType GetTestInputData() final {
@@ -40,21 +36,21 @@ class OlesnitskiyVRunPerfTestSEQ : public ppc::util::BaseRunPerfTests<InType, Ou
   }
 };
 
-TEST_P(OlesnitskiyVRunPerfTestSEQ, RunPerfModes) {
+TEST_P(OlesnitskiyVRunPerfTests, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
 namespace {
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, OlesnitskiyVHoareSortSimpleMergeOMP, OlesnitskiyVHoareSortSimpleMergeSEQ>(
+    ppc::util::MakeAllPerfTasks<InType, OlesnitskiyVHoareSortSimpleMergeSEQ, OlesnitskiyVHoareSortSimpleMergeOMP>(
         PPC_SETTINGS_olesnitskiy_v_hoare_sort_simple_merge_seq);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
-const auto kPerfTestName = OlesnitskiyVRunPerfTestSEQ::CustomPerfTestName;
+const auto kPerfTestName = OlesnitskiyVRunPerfTests::CustomPerfTestName;
 
-INSTANTIATE_TEST_SUITE_P(RunModeTests, OlesnitskiyVRunPerfTestSEQ, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(RunModeTests, OlesnitskiyVRunPerfTests, kGtestValues, kPerfTestName);
 
 }  // namespace
 
